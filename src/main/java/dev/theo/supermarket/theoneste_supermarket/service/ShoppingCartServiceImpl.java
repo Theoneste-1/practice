@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -35,13 +36,23 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
     }
 
     @Override
-    public void addToCart(String customerEmail, CartItemDTO cartItemDTO) throws ResourceNotFoundException {
+    public String addToCart(String customerEmail, CartItemDTO cartItemDTO) throws ResourceNotFoundException {
         // Verify customer exists
         customerService.getCustomerByEmail(customerEmail);
 
         // Verify product exists
         Product product = productRepository.findById(cartItemDTO.getProductCode())
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with code: " + cartItemDTO.getProductCode()));
+
+        Purchased purchased = new Purchased();
+        purchased.setDate(LocalDate.now());
+        purchased.setProductCode(product.getCode());
+        purchased.setQuantity(cartItemDTO.getQuantity());
+        purchased.setTotal(cartItemDTO.getQuantity() * product.getPrice());
+
+        purchasedRepository.save(purchased);
+
+        return "Product Saved";
 
         // In a real application, you would add items to a shopping cart entity
         // For this implementation, we'll just validate the request
